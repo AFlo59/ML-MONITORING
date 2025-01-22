@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+  api:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: fastapi_app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./model.pkl:/app/model.pkl
+    networks:
+      ml_monitoring:
+        ipv4_address: 172.16.238.10
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      ml_monitoring:
+        ipv4_address: 172.16.238.11
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      ml_monitoring:
+        ipv4_address: 172.16.238.12
+
+  evidently:
+    build:
+      context: ./evidently_app
+      dockerfile: Dockerfile
+    container_name: evidently_app
+    networks:
+      ml_monitoring:
+        ipv4_address: 172.16.238.13
+
+
+networks:
+  ml_monitoring:
+    name: ml_monitoring
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.16.238.0/24
