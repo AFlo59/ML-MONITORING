@@ -1,7 +1,7 @@
 fastapi
 uvicorn
-scikit-learn
-joblib
 pydantic
 numpy
+joblib
 prometheus-fastapi-instrumentator
+pytest
