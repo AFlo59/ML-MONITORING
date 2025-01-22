@@ -33,8 +33,6 @@ services:
       - ./dashboards:/var/lib/grafana/dashboards
     env_file:
       - ./grafana/config.monitoring
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
 
   node-exporter:
     image: prom/node-exporter:latest
