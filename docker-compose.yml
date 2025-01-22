@@ -28,8 +28,10 @@ services:
       - "3000:3000"
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
-      - ./dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+
+
 
 volumes:
   grafana_data:
