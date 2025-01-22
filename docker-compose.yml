@@ -31,7 +31,10 @@ services:
       - ./grafana/provisioning/dashboards/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
       - ./grafana/provisioning/datasources/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
 
-
+  node-exporter:
+    image: prom/node-exporter:latest
+    ports:
+      - "9100:9100"
 
 volumes:
   grafana_data:

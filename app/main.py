@@ -27,10 +27,10 @@ Instrumentator().instrument(app).expose(app)
 
 # Définir le modèle de données d'entrée
 class InputData(BaseModel):
-    feature1: float
-    feature2: float
-    feature3: float
-    feature4: float
+    sepal_length: float
+    sepal_width: float
+    petal_length: float
+    petal_width: float
 
 # Endpoint de prédiction
 @app.post("/predict")
