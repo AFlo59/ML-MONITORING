@@ -1,16 +1,17 @@
 version: '3.8'
 
 services:
-  api:
+  fastapi:
     build:
-      context: ./app
+      context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - ./app:/app
-    depends_on:
-      - prometheus
+      - .:/app
+    environment:
+      - PROMETHEUS_MULTIPROC_DIR=/tmp
+    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
 
   prometheus:
     image: prom/prometheus:latest
@@ -18,7 +19,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana:latest
@@ -26,16 +27,20 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./grafana/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
-      - ./grafana/dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
-      - ./grafana/fastapi-dashboard.json:/var/lib/grafana/dashboards/fastapi-dashboard.json
-    depends_on:
-      - prometheus
+      - grafana-data:/var/lib/grafana
+      - ./datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+      - ./dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
+      - ./dashboards:/var/lib/grafana/dashboards
+    env_file:
+      - ./grafana/config.monitoring
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
 
-  evidently:
-    build:
-      context: ./evidently
-      dockerfile: Dockerfile
-    volumes:
-      - ./evidently:/evidently
-    command: ["python", "monitoring_script.py"]
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+
+volumes:
+  grafana-data:

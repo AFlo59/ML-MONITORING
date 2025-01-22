@@ -1,11 +1,19 @@
 global:
-  scrape_interval: 15s
+  scrape_interval: 15s # How often to scrape targets by default.
+  evaluation_interval: 15s # How often to evaluate rules.
+  scrape_timeout: 10s # Timeout for scraping targets.
 
 scrape_configs:
-  - job_name: 'prometheus'
-    static_configs:
-      - targets: ['localhost:9090']
-
   - job_name: 'fastapi'
+    metrics_path: '/metrics'
     static_configs:
-      - targets: ['app:8000']
+      - targets: ['fastapi:8000'] # Replace with the correct service name and port
+
+  - job_name: 'prometheus'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['prometheus:9090'] # Prometheus server itself
+
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100'] # Node exporter for system metrics

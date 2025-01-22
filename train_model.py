@@ -1,30 +1,54 @@
-import joblib
-from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
+import pandas as pd
+import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-import os
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score, f1_score
+import joblib
 
-def train_and_save_model():
-    # Load the Iris dataset
-    data = load_iris()
-    X = data.data
-    y = data.target
+# Load dataset
+def load_data(filepath):
+    """Load the dataset from a given filepath."""
+    data = pd.read_csv(filepath)
+    return data
 
-    # Split the data into training and test sets
+# Preprocess data
+def preprocess_data(data):
+    """Preprocess the dataset by handling missing values and encoding."""
+    data = data.dropna()
+    X = data.drop('target', axis=1)
+    y = data['target']
+    return X, y
+
+# Train model
+def train_model(X, y):
+    """Train a Random Forest model."""
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Train the model
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model = RandomForestClassifier(random_state=42)
     model.fit(X_train, y_train)
+    
+    # Evaluate model
+    y_pred = model.predict(X_test)
+    accuracy = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average='weighted')
+    print("Accuracy:", accuracy)
+    print("F1 Score:", f1)
+    print("Classification Report:\n", classification_report(y_test, y_pred))
+    
+    return model
 
-    # Evaluate the model
-    accuracy = model.score(X_test, y_test)
-    print(f"Model accuracy: {accuracy:.2f}")
-
-    # Save the model
-    output_dir = "model_training"
-    os.makedirs(output_dir, exist_ok=True)
-    joblib.dump(model, os.path.join(output_dir, "model.pkl"))
+# Save model
+def save_model(model, output_path):
+    """Save the trained model to a file."""
+    joblib.dump(model, output_path)
+    print(f"Model saved to {output_path}")
 
 if __name__ == "__main__":
-    train_and_save_model()
+    # Filepath to dataset
+    DATA_PATH = "data/dataset.csv"
+    OUTPUT_MODEL_PATH = "models/random_forest_model.pkl"
+
+    # Execute pipeline
+    data = load_data(DATA_PATH)
+    X, y = preprocess_data(data)
+    model = train_model(X, y)
+    save_model(model, OUTPUT_MODEL_PATH)
