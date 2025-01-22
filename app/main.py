@@ -1,75 +1,58 @@
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
-import joblib
-import numpy as np
+from fastapi import FastAPI, HTTPException
 from prometheus_fastapi_instrumentator import Instrumentator
+from pydantic import BaseModel
+import pickle
+import pandas as pd
 import logging
 
-# Initialize FastAPI app
-app = FastAPI()
-
-# Initialize Prometheus Instrumentator
-instrumentator = Instrumentator()
-instrumentator.instrument(app).expose(app)
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+# Configurer le logger
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Load the trained model
-MODEL_PATH = "models/random_forest_model.pkl"
+# Charger le modèle ML
+MODEL_PATH = "model_training/model.pkl"
 try:
-    model = joblib.load(MODEL_PATH)
-    logger.info(f"Model loaded successfully from {MODEL_PATH}")
+    with open(MODEL_PATH, "rb") as f:
+        model = pickle.load(f)
+    logger.info("Modèle chargé avec succès depuis %s", MODEL_PATH)
 except Exception as e:
-    logger.error(f"Failed to load model: {e}")
-    raise
+    logger.error("Erreur lors du chargement du modèle : %s", str(e))
+    model = None
 
-# Input data schema
-class PredictionRequest(BaseModel):
-    features: list
+# Définir l'application FastAPI
+app = FastAPI()
 
-# Home endpoint
-@app.get("/", response_class=HTMLResponse)
-def home():
-    return """
-    <html>
-        <head>
-            <title>API Home</title>
-        </head>
-        <body>
-            <h1>Welcome to the FastAPI ML Service</h1>
-            <ul>
-                <li><a href="/docs">API Documentation</a></li>
-                <li><a href="/health">Health Check</a></li>
-                <li><a href="/predict">Predict Endpoint (POST only)</a></li>
-            </ul>
-        </body>
-    </html>
-    """
+# Ajouter Prometheus Instrumentator
+Instrumentator().instrument(app).expose(app)
 
-# Health check endpoint
-@app.get("/health")
-def health():
-    return {"status": "healthy"}
+# Définir le modèle de données d'entrée
+class InputData(BaseModel):
+    feature1: float
+    feature2: float
+    feature3: float
+    feature4: float
 
-# Prediction endpoint
+# Endpoint de prédiction
 @app.post("/predict")
-def predict(request: PredictionRequest):
-    try:
-        features = np.array(request.features).reshape(1, -1)
-        prediction = model.predict(features).tolist()
-        logger.info(f"Prediction made: {prediction}")
-        return {"prediction": prediction}
-    except Exception as e:
-        logger.error(f"Prediction failed: {e}")
-        raise HTTPException(status_code=500, detail="Prediction failed")
+async def predict(data: InputData):
+    if model is None:
+        raise HTTPException(status_code=500, detail="Le modèle n'est pas disponible")
 
-# Middleware for logging requests
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    logger.info(f"Request: {request.method} {request.url}")
-    response = await call_next(request)
-    logger.info(f"Response status: {response.status_code}")
-    return response
+    # Convertir les données en DataFrame
+    input_df = pd.DataFrame([data.dict()])
+
+    # Log des données reçues
+    logger.info("Données reçues : %s", input_df.to_dict(orient="records"))
+
+    try:
+        # Faire la prédiction
+        prediction = model.predict(input_df)
+        logger.info("Prédiction réalisée avec succès")
+        return {"prediction": prediction.tolist()}
+    except Exception as e:
+        logger.error("Erreur lors de la prédiction : %s", str(e))
+        raise HTTPException(status_code=500, detail="Erreur lors de la prédiction")
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok"}

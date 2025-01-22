@@ -5,3 +5,5 @@ numpy
 joblib
 prometheus-fastapi-instrumentator
 pytest
+pandas
+scikit-learn

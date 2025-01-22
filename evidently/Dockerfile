@@ -1,16 +1,19 @@
-# Dockerfile for Evidently AI
-
 FROM python:3.9-slim
 
-# Define working directory
-WORKDIR /evidently
+# Installer les dépendances système
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install dependencies
-COPY requirements.txt /evidently/requirements.txt
-RUN pip install --no-cache-dir -r /evidently/requirements.txt
+# Définir le répertoire de travail
+WORKDIR /usr/src/app
 
-# Copy configuration and necessary scripts
-COPY . /evidently
+# Copier le fichier requirements.txt et installer les dépendances
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set entrypoint for running Evidently
+# Copier le reste des fichiers
+COPY . .
+
+# Commande par défaut
 CMD ["python", "monitoring_script.py"]

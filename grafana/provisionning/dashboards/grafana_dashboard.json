@@ -1,79 +1,80 @@
 {
   "dashboard": {
     "id": null,
-    "title": "FastAPI Monitoring",
+    "uid": null,
+    "title": "API Monitoring Dashboard",
     "timezone": "browser",
     "panels": [
       {
         "type": "graph",
-        "title": "API Response Time",
-        "targets": [
-          {
-            "expr": "http_request_duration_seconds_sum / http_request_duration_seconds_count",
-            "legendFormat": "{{handler}}",
-            "refId": "A"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        }
-      },
-      {
-        "type": "graph",
-        "title": "API Request Rate",
+        "title": "Request Rate",
         "targets": [
           {
             "expr": "rate(http_requests_total[1m])",
-            "legendFormat": "{{status_code}}",
+            "legendFormat": "{{status}}",
+            "refId": "A"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        },
+        "yaxes": [
+          {
+            "format": "reqps",
+            "label": "Requests per second",
+            "logBase": 1
+          },
+          {
+            "format": "short",
+            "show": true
+          }
+        ]
+      },
+      {
+        "type": "graph",
+        "title": "Response Time",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))",
+            "legendFormat": "95th percentile",
             "refId": "B"
           }
         ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        }
+        "xaxis": {
+          "mode": "time"
+        },
+        "yaxes": [
+          {
+            "format": "s",
+            "label": "Seconds",
+            "logBase": 1
+          },
+          {
+            "format": "short",
+            "show": true
+          }
+        ]
       },
       {
-        "type": "graph",
-        "title": "CPU Usage",
+        "type": "stat",
+        "title": "Error Rate",
         "targets": [
           {
-            "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[1m])) * 100)",
-            "legendFormat": "CPU Usage",
+            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))",
+            "legendFormat": "Error Rate",
             "refId": "C"
           }
         ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 8
-        }
-      },
-      {
-        "type": "graph",
-        "title": "Memory Usage",
-        "targets": [
-          {
-            "expr": "(1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100",
-            "legendFormat": "Memory Usage",
-            "refId": "D"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 8
+        "colorValue": true,
+        "colorBackground": true,
+        "thresholds": "0.1,0.5",
+        "sparkline": {
+          "show": true
         }
       }
     ],
-    "schemaVersion": 30,
-    "version": 1
+    "schemaVersion": 27,
+    "version": 0,
+    "refresh": "5s"
   }
 }

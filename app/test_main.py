@@ -1,37 +1,50 @@
 from fastapi.testclient import TestClient
+import unittest
 from main import app
 
-# Initialize TestClient
+# Créer un client de test
 client = TestClient(app)
 
-def test_health_check():
-    """Test the /health endpoint."""
-    response = client.get("/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "healthy"}
+class TestAPI(unittest.TestCase):
 
-def test_homepage():
-    """Test the homepage / endpoint."""
-    response = client.get("/")
-    assert response.status_code == 200
-    assert "<title>API Home</title>" in response.text
-    assert "<a href=\"/docs\">API Documentation</a>" in response.text
+    def test_health_endpoint(self):
+        """Tester l'endpoint /health"""
+        response = client.get("/health")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
 
-def test_predict_valid_input():
-    """Test the /predict endpoint with valid input."""
-    payload = {"features": [5.1, 3.5, 1.4, 0.2]}
-    response = client.post("/predict", json=payload)
-    assert response.status_code == 200
-    assert "prediction" in response.json()
+    def test_predict_endpoint_success(self):
+        """Tester l'endpoint /predict avec des données valides"""
+        payload = {
+            "feature1": 1.0,
+            "feature2": 2.0,
+            "feature3": 3.0,
+            "feature4": 4.0
+        }
+        response = client.post("/predict", json=payload)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("prediction", response.json())
 
-def test_predict_invalid_input():
-    """Test the /predict endpoint with invalid input."""
-    payload = {"features": "invalid"}
-    response = client.post("/predict", json=payload)
-    assert response.status_code == 422  # Unprocessable Entity for validation error
+    def test_predict_endpoint_missing_feature(self):
+        """Tester l'endpoint /predict avec une feature manquante"""
+        payload = {
+            "feature1": 1.0,
+            "feature2": 2.0,
+            "feature3": 3.0
+        }
+        response = client.post("/predict", json=payload)
+        self.assertEqual(response.status_code, 422)  # Erreur de validation des données
 
-def test_predict_empty_input():
-    """Test the /predict endpoint with empty input."""
-    payload = {"features": []}
-    response = client.post("/predict", json=payload)
-    assert response.status_code == 422  # Unprocessable Entity for validation error
+    def test_predict_endpoint_invalid_data(self):
+        """Tester l'endpoint /predict avec des données invalides"""
+        payload = {
+            "feature1": "invalid",
+            "feature2": 2.0,
+            "feature3": 3.0,
+            "feature4": 4.0
+        }
+        response = client.post("/predict", json=payload)
+        self.assertEqual(response.status_code, 422)  # Erreur de validation des données
+
+if __name__ == "__main__":
+    unittest.main()

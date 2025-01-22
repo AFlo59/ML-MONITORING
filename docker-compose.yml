@@ -1,44 +1,35 @@
 version: '3.8'
 
 services:
-  fastapi:
+  app:
     build:
-      context: .
+      context: ./app
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
     volumes:
-      - .:/app
+      - ./app:/usr/src/app
     environment:
       - PROMETHEUS_MULTIPROC_DIR=/tmp
-    command: ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+
 
   prometheus:
     image: prom/prometheus:latest
-    container_name: prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
       - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
     ports:
       - "3000:3000"
     volumes:
-      - grafana-data:/var/lib/grafana
+      - grafana_data:/var/lib/grafana
       - ./datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
       - ./dashboard.yml:/etc/grafana/provisioning/dashboards/dashboard.yml
-      - ./dashboards:/var/lib/grafana/dashboards
-    env_file:
-      - ./grafana/config.monitoring
-
-  node-exporter:
-    image: prom/node-exporter:latest
-    container_name: node-exporter
-    ports:
-      - "9100:9100"
 
 volumes:
-  grafana-data:
+  grafana_data:
