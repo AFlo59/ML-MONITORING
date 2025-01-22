@@ -11,7 +11,7 @@ This project demonstrates how to monitor a machine learning API using FastAPI, E
 ### 1. Train the Model
 Navigate to the `model_training/` directory and run:
 ```bash
-python train_model.py
+python3 train_model.py
 ```
 
 ### 2. Start the Services
